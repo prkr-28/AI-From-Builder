@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import FormEdit from "./Formedit";
 
 const FormUi = ({ jsonform }) => {
   const [formData, setFormData] = useState({});
@@ -56,6 +57,27 @@ const FormUi = ({ jsonform }) => {
     // Here you would typically send the data to your API
   };
 
+  // Helper function to extract value and label from option
+  const getOptionData = (option, index) => {
+    if (typeof option === "object" && option !== null) {
+      return {
+        value:
+          option.value && option.value.trim() !== ""
+            ? option.value
+            : `option-${index}`,
+        label: option.label || option.value || `Option ${index + 1}`,
+      };
+    } else {
+      return {
+        value:
+          option && option.toString().trim() !== ""
+            ? option.toString()
+            : `option-${index}`,
+        label: option || `Option ${index + 1}`,
+      };
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white shadow-lg rounded-2xl">
       {/* Title */}
@@ -88,9 +110,12 @@ const FormUi = ({ jsonform }) => {
           if (field.fieldType === "select") {
             return (
               <div key={index} className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm flex gap-1 items-center font-medium text-gray-700">
                   {field?.label}
                   {field.required && <span className="text-red-500"> *</span>}
+                  <div>
+                    <FormEdit defaultValue={field} />
+                  </div>
                 </label>
                 <Select
                   onValueChange={(value) =>
@@ -104,14 +129,10 @@ const FormUi = ({ jsonform }) => {
                   </SelectTrigger>
                   <SelectContent>
                     {field?.options?.map((option, i) => {
-                      const safeValue =
-                        option.value && option.value.trim() !== ""
-                          ? option
-                          : `option-${i}`;
-
+                      const { value, label } = getOptionData(option, i);
                       return (
-                        <SelectItem key={i} value={safeValue}>
-                          {option || `Option ${i + 1}`}
+                        <SelectItem key={i} value={value}>
+                          {label}
                         </SelectItem>
                       );
                     })}
@@ -126,22 +147,32 @@ const FormUi = ({ jsonform }) => {
             // If it's a single checkbox (like terms acceptance)
             if (!field.options || field.options.length === 0) {
               return (
-                <div key={index} className="flex items-center gap-2">
-                  <Checkbox
-                    id={field.fieldName}
-                    checked={formData[field.fieldName] || false}
-                    onCheckedChange={(checked) =>
-                      handleCheckboxChange(field.fieldName, null, checked)
-                    }
-                    required={field.required}
-                  />
-                  <Label
-                    htmlFor={field.fieldName}
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    <span dangerouslySetInnerHTML={{ __html: field?.label }} />
-                    {field.required && <span className="text-red-500"> *</span>}
-                  </Label>
+                <div className="flex gap-1 items-center" key={index}>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id={field.fieldName}
+                      checked={formData[field.fieldName] || false}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange(field.fieldName, null, checked)
+                      }
+                      required={field.required}
+                    />
+                    <Label
+                      htmlFor={field.fieldName}
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      <span
+                        dangerouslySetInnerHTML={{ __html: field?.label }}
+                      />
+                      {field.required && (
+                        <span className="text-red-500"> *</span>
+                      )}
+                    </Label>
+                  </div>
+
+                  <div>
+                    <FormEdit defaultValue={field} />
+                  </div>
                 </div>
               );
             }
@@ -149,35 +180,37 @@ const FormUi = ({ jsonform }) => {
             // If it's multiple checkboxes
             return (
               <div key={index} className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {field?.label}
-                  {field.required && <span className="text-red-500"> *</span>}
-                </label>
+                <div className="flex gap-1 items-center">
+                  <label className="text-sm font-medium text-gray-700">
+                    {field?.label}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </label>
+                  <div>
+                    <FormEdit defaultValue={field} />
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-2">
                   {field.options.map((option, i) => {
-                    const safeValue =
-                      option.value && option.value.trim() !== ""
-                        ? option
-                        : `option-${i}`;
-
+                    const { value, label } = getOptionData(option, i);
                     return (
                       <div key={i} className="flex items-center gap-2">
                         <Checkbox
                           id={`${field.fieldName}-${i}`}
-                          value={safeValue}
+                          value={value}
                           checked={(formData[field.fieldName] || []).includes(
-                            safeValue
+                            value
                           )}
                           onCheckedChange={(checked) =>
                             handleCheckboxChange(
                               field.fieldName,
-                              safeValue,
+                              value,
                               checked
                             )
                           }
                         />
                         <Label htmlFor={`${field.fieldName}-${i}`}>
-                          {option || `Option ${i + 1}`}
+                          {label}
                         </Label>
                       </div>
                     );
@@ -201,19 +234,15 @@ const FormUi = ({ jsonform }) => {
                   }
                 >
                   {field?.options?.map((option, i) => {
-                    const safeValue =
-                      option.value && option.value.trim() !== ""
-                        ? option
-                        : `option-${i}`;
-
+                    const { value, label } = getOptionData(option, i);
                     return (
                       <div key={i} className="flex items-center gap-2">
                         <RadioGroupItem
-                          value={safeValue}
+                          value={value}
                           id={`${field.fieldName}-${i}`}
                         />
                         <Label htmlFor={`${field.fieldName}-${i}`}>
-                          {option || `Option ${i + 1}`}
+                          {label}
                         </Label>
                       </div>
                     );
@@ -227,10 +256,15 @@ const FormUi = ({ jsonform }) => {
           if (field.fieldType === "textarea") {
             return (
               <div key={index} className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {field?.label}
-                  {field.required && <span className="text-red-500"> *</span>}
-                </label>
+                <div className="flex gap-1 items-center">
+                  <label className="text-sm font-medium text-gray-700">
+                    {field?.label}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </label>
+                  <div>
+                    <FormEdit defaultValue={field} />
+                  </div>
+                </div>
                 <Textarea
                   placeholder={field?.placeholder}
                   value={formData[field.fieldName] || ""}
@@ -246,10 +280,15 @@ const FormUi = ({ jsonform }) => {
           // ✅ Default: Input field
           return (
             <div key={index} className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-gray-700">
-                {field?.label}
-                {field.required && <span className="text-red-500"> *</span>}
-              </label>
+              <div className="flex gap-1 items-center">
+                <label className="text-sm font-medium text-gray-700">
+                  {field?.label}
+                  {field.required && <span className="text-red-500"> *</span>}
+                </label>
+                <div>
+                  <FormEdit defaultValue={field} />
+                </div>
+              </div>
               <Input
                 type={field?.fieldType || "text"}
                 placeholder={field?.placeholder}
