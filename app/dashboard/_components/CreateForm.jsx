@@ -11,12 +11,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useUser } from "@clerk/nextjs";
+import { db } from "@/config";
+import { forms } from "@/config/schema";
+import moment from "moment";
 
 const CreateForm = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [userInput, setUserInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [formJson, setFormJson] = useState(null);
+  const { user } = useUser();
 
   const handleCreateForm = async () => {
     setLoading(true);
@@ -27,9 +31,22 @@ const CreateForm = () => {
         body: JSON.stringify({ description: userInput }),
       });
 
-      const data = await res.json();
-      setFormJson(data.form);
-      console.log("Generated Form JSON:", data.form);
+      const data = await res.json(); // ✅ parse JSON properly
+
+      if (data?.form) {
+        const resp = await db
+          .insert(forms)
+          .values({
+            jsonform: JSON.stringify(data.form), // ✅ store JSON safely
+            createdBy: user?.primaryEmailAddress?.emailAddress,
+            createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
+          })
+          .returning({ id: forms.id });
+
+        console.log("new form id:", resp);
+      }
+
+      console.log("Generated Form JSON (parsed):", data);
     } catch (err) {
       console.error("Error generating form:", err);
     }
