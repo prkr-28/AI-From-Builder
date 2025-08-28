@@ -12,6 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 
 const FormUi = ({ jsonform }) => {
   return (
@@ -48,6 +49,7 @@ const FormUi = ({ jsonform }) => {
               <div key={index} className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-gray-700">
                   {field?.label}
+                  {field.required && <span className="text-red-500"> *</span>}
                 </label>
                 <Select>
                   <SelectTrigger className="w-full">
@@ -57,11 +59,15 @@ const FormUi = ({ jsonform }) => {
                   </SelectTrigger>
                   <SelectContent>
                     {field?.options?.map((option, i) => {
+                      // Ensure value is not empty
                       const safeValue =
-                        option?.toString().trim() || `option-${i}`; // ✅ prevent empty value
+                        option.value && option.value.trim() !== ""
+                          ? option.value
+                          : `option-${i}`;
+
                       return (
                         <SelectItem key={i} value={safeValue}>
-                          {option || `Option ${i + 1}`}
+                          {option.label || `Option ${i + 1}`}
                         </SelectItem>
                       );
                     })}
@@ -77,16 +83,28 @@ const FormUi = ({ jsonform }) => {
               <div key={index} className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-gray-700">
                   {field?.label}
+                  {field.required && <span className="text-red-500"> *</span>}
                 </label>
                 <div className="flex flex-col gap-2">
-                  {field?.options?.map((option, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Checkbox id={`${field.name}-${i}`} />
-                      <Label htmlFor={`${field.name}-${i}`}>
-                        {option || `Option ${i + 1}`}
-                      </Label>
-                    </div>
-                  ))}
+                  {field?.options?.map((option, i) => {
+                    // Ensure value is not empty
+                    const safeValue =
+                      option.value && option.value.trim() !== ""
+                        ? option.value
+                        : `option-${i}`;
+
+                    return (
+                      <div key={i} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`${field.fieldName}-${i}`}
+                          value={safeValue}
+                        />
+                        <Label htmlFor={`${field.fieldName}-${i}`}>
+                          {option.label || `Option ${i + 1}`}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -98,18 +116,24 @@ const FormUi = ({ jsonform }) => {
               <div key={index} className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-gray-700">
                   {field?.label}
+                  {field.required && <span className="text-red-500"> *</span>}
                 </label>
                 <RadioGroup>
                   {field?.options?.map((option, i) => {
-                    const safeValue = option?.toString().trim() || `radio-${i}`;
+                    // Ensure value is not empty
+                    const safeValue =
+                      option.value && option.value.trim() !== ""
+                        ? option.value
+                        : `option-${i}`;
+
                     return (
                       <div key={i} className="flex items-center gap-2">
                         <RadioGroupItem
                           value={safeValue}
-                          id={`${field.name}-${i}`}
+                          id={`${field.fieldName}-${i}`}
                         />
-                        <Label htmlFor={`${field.name}-${i}`}>
-                          {option || `Option ${i + 1}`}
+                        <Label htmlFor={`${field.fieldName}-${i}`}>
+                          {option.label || `Option ${i + 1}`}
                         </Label>
                       </div>
                     );
@@ -119,14 +143,31 @@ const FormUi = ({ jsonform }) => {
             );
           }
 
+          // ✅ Textarea Field
+          if (field.fieldType === "textarea") {
+            return (
+              <div key={index} className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {field?.label}
+                  {field.required && <span className="text-red-500"> *</span>}
+                </label>
+                <Textarea
+                  placeholder={field?.placeholder}
+                  className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
+                />
+              </div>
+            );
+          }
+
           // ✅ Default: Input field
           return (
             <div key={index} className="flex flex-col gap-2">
               <label className="text-sm font-medium text-gray-700">
                 {field?.label}
+                {field.required && <span className="text-red-500"> *</span>}
               </label>
               <Input
-                type={field?.type || "text"}
+                type={field?.fieldType || "text"}
                 placeholder={field?.placeholder}
                 className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
               />
