@@ -15,12 +15,14 @@ import { useUser } from "@clerk/nextjs";
 import { db } from "@/config";
 import { forms } from "@/config/schema";
 import moment from "moment";
+import { useRouter } from "next/navigation";
 
 const CreateForm = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [userInput, setUserInput] = useState("");
   const [loading, setLoading] = useState(false);
   const { user } = useUser();
+  const router = useRouter();
 
   const handleCreateForm = async () => {
     setLoading(true);
@@ -42,6 +44,10 @@ const CreateForm = () => {
             createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
           })
           .returning({ id: forms.id });
+
+        if (resp[0].id) {
+          router.push(`/edit_form/${resp[0].id}`);
+        }
 
         console.log("new form id:", resp);
       }
