@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +15,47 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
 const FormUi = ({ jsonform }) => {
+  const [formData, setFormData] = useState({});
+
+  const handleInputChange = (fieldName, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: value,
+    }));
+  };
+
+  const handleCheckboxChange = (fieldName, value, isChecked) => {
+    setFormData((prev) => {
+      // If it's a single checkbox (not in options array)
+      if (!value) {
+        return {
+          ...prev,
+          [fieldName]: isChecked,
+        };
+      }
+
+      // For multiple checkboxes
+      const currentValues = prev[fieldName] || [];
+      if (isChecked) {
+        return {
+          ...prev,
+          [fieldName]: [...currentValues, value],
+        };
+      } else {
+        return {
+          ...prev,
+          [fieldName]: currentValues.filter((v) => v !== value),
+        };
+      }
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form Data:", formData);
+    // Here you would typically send the data to your API
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white shadow-lg rounded-2xl">
       {/* Title */}
@@ -26,7 +67,7 @@ const FormUi = ({ jsonform }) => {
       </h3>
 
       {/* Form Fields */}
-      <form className="space-y-5">
+      <form className="space-y-5" onSubmit={handleSubmit}>
         {jsonform?.fields?.map((field, index) => {
           // ✅ Section Header
           if (field.fieldType === "section_header") {
@@ -51,7 +92,11 @@ const FormUi = ({ jsonform }) => {
                   {field?.label}
                   {field.required && <span className="text-red-500"> *</span>}
                 </label>
-                <Select>
+                <Select
+                  onValueChange={(value) =>
+                    handleInputChange(field.fieldName, value)
+                  }
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue
                       placeholder={field?.placeholder || "Select option"}
@@ -59,15 +104,14 @@ const FormUi = ({ jsonform }) => {
                   </SelectTrigger>
                   <SelectContent>
                     {field?.options?.map((option, i) => {
-                      // Ensure value is not empty
                       const safeValue =
                         option.value && option.value.trim() !== ""
-                          ? option.value
+                          ? option
                           : `option-${i}`;
 
                       return (
                         <SelectItem key={i} value={safeValue}>
-                          {option.label || `Option ${i + 1}`}
+                          {option || `Option ${i + 1}`}
                         </SelectItem>
                       );
                     })}
@@ -77,8 +121,32 @@ const FormUi = ({ jsonform }) => {
             );
           }
 
-          // ✅ Checkbox Field
+          // ✅ Checkbox Field - Handle both single and multiple checkboxes
           if (field.fieldType === "checkbox") {
+            // If it's a single checkbox (like terms acceptance)
+            if (!field.options || field.options.length === 0) {
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <Checkbox
+                    id={field.fieldName}
+                    checked={formData[field.fieldName] || false}
+                    onCheckedChange={(checked) =>
+                      handleCheckboxChange(field.fieldName, null, checked)
+                    }
+                    required={field.required}
+                  />
+                  <Label
+                    htmlFor={field.fieldName}
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    <span dangerouslySetInnerHTML={{ __html: field?.label }} />
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </Label>
+                </div>
+              );
+            }
+
+            // If it's multiple checkboxes
             return (
               <div key={index} className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-gray-700">
@@ -86,11 +154,10 @@ const FormUi = ({ jsonform }) => {
                   {field.required && <span className="text-red-500"> *</span>}
                 </label>
                 <div className="flex flex-col gap-2">
-                  {field?.options?.map((option, i) => {
-                    // Ensure value is not empty
+                  {field.options.map((option, i) => {
                     const safeValue =
                       option.value && option.value.trim() !== ""
-                        ? option.value
+                        ? option
                         : `option-${i}`;
 
                     return (
@@ -98,9 +165,19 @@ const FormUi = ({ jsonform }) => {
                         <Checkbox
                           id={`${field.fieldName}-${i}`}
                           value={safeValue}
+                          checked={(formData[field.fieldName] || []).includes(
+                            safeValue
+                          )}
+                          onCheckedChange={(checked) =>
+                            handleCheckboxChange(
+                              field.fieldName,
+                              safeValue,
+                              checked
+                            )
+                          }
                         />
                         <Label htmlFor={`${field.fieldName}-${i}`}>
-                          {option.label || `Option ${i + 1}`}
+                          {option || `Option ${i + 1}`}
                         </Label>
                       </div>
                     );
@@ -118,12 +195,15 @@ const FormUi = ({ jsonform }) => {
                   {field?.label}
                   {field.required && <span className="text-red-500"> *</span>}
                 </label>
-                <RadioGroup>
+                <RadioGroup
+                  onValueChange={(value) =>
+                    handleInputChange(field.fieldName, value)
+                  }
+                >
                   {field?.options?.map((option, i) => {
-                    // Ensure value is not empty
                     const safeValue =
                       option.value && option.value.trim() !== ""
-                        ? option.value
+                        ? option
                         : `option-${i}`;
 
                     return (
@@ -133,7 +213,7 @@ const FormUi = ({ jsonform }) => {
                           id={`${field.fieldName}-${i}`}
                         />
                         <Label htmlFor={`${field.fieldName}-${i}`}>
-                          {option.label || `Option ${i + 1}`}
+                          {option || `Option ${i + 1}`}
                         </Label>
                       </div>
                     );
@@ -153,6 +233,10 @@ const FormUi = ({ jsonform }) => {
                 </label>
                 <Textarea
                   placeholder={field?.placeholder}
+                  value={formData[field.fieldName] || ""}
+                  onChange={(e) =>
+                    handleInputChange(field.fieldName, e.target.value)
+                  }
                   className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
                 />
               </div>
@@ -169,6 +253,10 @@ const FormUi = ({ jsonform }) => {
               <Input
                 type={field?.fieldType || "text"}
                 placeholder={field?.placeholder}
+                value={formData[field.fieldName] || ""}
+                onChange={(e) =>
+                  handleInputChange(field.fieldName, e.target.value)
+                }
                 className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
               />
             </div>

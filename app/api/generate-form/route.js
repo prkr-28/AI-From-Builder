@@ -18,7 +18,7 @@ export async function POST(req) {
         role: "user",
         parts: [
           {
-            text: `Description: ${description}. On the basis of description please give form in JSON format with form title, form subheading, along with fieldName, fieldTitle, fieldType, placeholder, label, required fields.`,
+            text: `Description: ${description}. On the basis of description please give user-facing form for participants to fill out in JSON format with form title, form subheading, along with fieldName, fieldTitle, fieldType, placeholder, label, required fields.`,
           },
         ],
       },
