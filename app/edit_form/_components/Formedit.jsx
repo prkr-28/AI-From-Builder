@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const FormEdit = ({ defaultValue }) => {
+const FormEdit = ({ defaultValue, onUpdate }) => {
   const [label, setLabel] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   return (
@@ -39,7 +39,9 @@ const FormEdit = ({ defaultValue }) => {
           </div>
 
           <div className="flex items-center justify-center pt-4">
-            <Button size="sm">Update</Button>
+            <Button onClick={() => onUpdate({ label, placeholder })} size="sm">
+              Update
+            </Button>
           </div>
         </PopoverContent>
       </Popover>
