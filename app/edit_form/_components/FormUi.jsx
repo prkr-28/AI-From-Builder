@@ -15,7 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import FormEdit from "./Formedit";
 
-const FormUi = ({ jsonform }) => {
+const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default" }) => {
   const [formData, setFormData] = useState({});
 
   const handleInputChange = (fieldName, value) => {
@@ -51,6 +51,77 @@ const FormUi = ({ jsonform }) => {
     });
   };
 
+  const updateField = (index, updatedField) => {
+    if (!editable || !onUpdate) return;
+    
+    const updatedFields = [...jsonform.fields];
+    updatedFields[index] = { ...updatedFields[index], ...updatedField };
+    
+    const updatedForm = {
+      ...jsonform,
+      fields: updatedFields,
+    };
+    
+    onUpdate(updatedForm);
+  };
+
+  const deleteField = (index) => {
+    if (!editable || !onUpdate) return;
+    
+    const updatedFields = jsonform.fields.filter((_, i) => i !== index);
+    const updatedForm = {
+      ...jsonform,
+      fields: updatedFields,
+    };
+    
+    onUpdate(updatedForm);
+  };
+
+  const getThemeClasses = () => {
+    const theme = jsonform?.theme || selectedTheme;
+    const background = jsonform?.background || "white";
+    const borderRadius = jsonform?.borderRadius || "rounded";
+    
+    let themeClass = "bg-white text-gray-900";
+    let borderClass = "rounded-2xl";
+    let backgroundClass = "bg-white";
+    
+    switch (theme) {
+      case "dark":
+        themeClass = "bg-gray-900 text-white";
+        break;
+      case "blue":
+        themeClass = "bg-blue-50 text-blue-900";
+        break;
+      case "green":
+        themeClass = "bg-green-50 text-green-900";
+        break;
+      case "purple":
+        themeClass = "bg-purple-50 text-purple-900";
+        break;
+    }
+    
+    switch (background) {
+      case "gray":
+        backgroundClass = "bg-gray-50";
+        break;
+      case "gradient":
+        backgroundClass = "bg-gradient-to-br from-purple-50 to-blue-50";
+        break;
+    }
+    
+    switch (borderRadius) {
+      case "sharp":
+        borderClass = "rounded-none";
+        break;
+      case "extra-rounded":
+        borderClass = "rounded-3xl";
+        break;
+    }
+    
+    return `${themeClass} ${backgroundClass} ${borderClass}`;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Form Data:", formData);
@@ -79,12 +150,12 @@ const FormUi = ({ jsonform }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8 bg-white shadow-lg rounded-2xl">
+    <div className={`max-w-2xl mx-auto p-8 shadow-lg ${getThemeClasses()}`}>
       {/* Title */}
-      <h2 className="font-bold text-center text-3xl text-primary mb-2">
+      <h2 className="font-bold text-center text-3xl mb-2" style={{ color: 'var(--primary)' }}>
         {jsonform.formTitle}
       </h2>
-      <h3 className="text-sm text-gray-500 text-center mb-6">
+      <h3 className="text-sm opacity-70 text-center mb-6">
         {jsonform.formSubheading}
       </h3>
 
@@ -95,13 +166,22 @@ const FormUi = ({ jsonform }) => {
           if (field.fieldType === "section_header") {
             return (
               <div key={index} className="pt-6">
-                <h3 className="text-[22px] font-semibold text-gray-800">
+                <h3 className="text-[22px] font-semibold">
                   {field?.label}
                 </h3>
                 {field?.description && (
-                  <p className="text-sm text-gray-500">{field.description}</p>
+                  <p className="text-sm opacity-70">{field.description}</p>
                 )}
-                <hr className="my-3 border-gray-200" />
+                <hr className="my-3 opacity-20" />
+                {editable && (
+                  <div className="flex justify-end">
+                    <FormEdit 
+                      defaultValue={field} 
+                      onUpdate={(updatedField) => updateField(index, updatedField)}
+                      onDelete={() => deleteField(index)}
+                    />
+                  </div>
+                )}
               </div>
             );
           }
@@ -110,12 +190,18 @@ const FormUi = ({ jsonform }) => {
           if (field.fieldType === "select") {
             return (
               <div key={index} className="flex flex-col gap-2">
-                <label className="text-sm flex gap-1 items-center font-medium text-gray-700">
+                <label className="text-sm flex gap-1 items-center font-medium">
                   {field?.label}
                   {field.required && <span className="text-red-500"> *</span>}
-                  <div>
-                    <FormEdit defaultValue={field} />
-                  </div>
+                  {editable && (
+                    <div>
+                      <FormEdit 
+                        defaultValue={field} 
+                        onUpdate={(updatedField) => updateField(index, updatedField)}
+                        onDelete={() => deleteField(index)}
+                      />
+                    </div>
+                  )}
                 </label>
                 <Select
                   onValueChange={(value) =>
@@ -159,7 +245,7 @@ const FormUi = ({ jsonform }) => {
                     />
                     <Label
                       htmlFor={field.fieldName}
-                      className="text-sm font-medium text-gray-700"
+                      className="text-sm font-medium"
                     >
                       <span
                         dangerouslySetInnerHTML={{ __html: field?.label }}
@@ -170,9 +256,15 @@ const FormUi = ({ jsonform }) => {
                     </Label>
                   </div>
 
-                  <div>
-                    <FormEdit defaultValue={field} />
-                  </div>
+                  {editable && (
+                    <div>
+                      <FormEdit 
+                        defaultValue={field} 
+                        onUpdate={(updatedField) => updateField(index, updatedField)}
+                        onDelete={() => deleteField(index)}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             }
@@ -181,13 +273,19 @@ const FormUi = ({ jsonform }) => {
             return (
               <div key={index} className="flex flex-col gap-2">
                 <div className="flex gap-1 items-center">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium">
                     {field?.label}
                     {field.required && <span className="text-red-500"> *</span>}
                   </label>
-                  <div>
-                    <FormEdit defaultValue={field} />
-                  </div>
+                  {editable && (
+                    <div>
+                      <FormEdit 
+                        defaultValue={field} 
+                        onUpdate={(updatedField) => updateField(index, updatedField)}
+                        onDelete={() => deleteField(index)}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -224,7 +322,7 @@ const FormUi = ({ jsonform }) => {
           if (field.fieldType === "radio") {
             return (
               <div key={index} className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium">
                   {field?.label}
                   {field.required && <span className="text-red-500"> *</span>}
                 </label>
@@ -257,13 +355,19 @@ const FormUi = ({ jsonform }) => {
             return (
               <div key={index} className="flex flex-col gap-2">
                 <div className="flex gap-1 items-center">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium">
                     {field?.label}
                     {field.required && <span className="text-red-500"> *</span>}
                   </label>
-                  <div>
-                    <FormEdit defaultValue={field} />
-                  </div>
+                  {editable && (
+                    <div>
+                      <FormEdit 
+                        defaultValue={field} 
+                        onUpdate={(updatedField) => updateField(index, updatedField)}
+                        onDelete={() => deleteField(index)}
+                      />
+                    </div>
+                  )}
                 </div>
                 <Textarea
                   placeholder={field?.placeholder}
@@ -281,13 +385,19 @@ const FormUi = ({ jsonform }) => {
           return (
             <div key={index} className="flex flex-col gap-2">
               <div className="flex gap-1 items-center">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium">
                   {field?.label}
                   {field.required && <span className="text-red-500"> *</span>}
                 </label>
-                <div>
-                  <FormEdit defaultValue={field} />
-                </div>
+                {editable && (
+                  <div>
+                    <FormEdit 
+                      defaultValue={field} 
+                      onUpdate={(updatedField) => updateField(index, updatedField)}
+                      onDelete={() => deleteField(index)}
+                    />
+                  </div>
+                )}
               </div>
               <Input
                 type={field?.fieldType || "text"}
@@ -306,7 +416,11 @@ const FormUi = ({ jsonform }) => {
         <div className="pt-4">
           <button
             type="submit"
-            className="w-full bg-primary text-white font-medium py-2 rounded-lg hover:bg-primary/90 transition"
+            className="w-full font-medium py-3 rounded-lg transition"
+            style={{ 
+              backgroundColor: 'var(--primary)', 
+              color: 'var(--primary-foreground)' 
+            }}
           >
             Submit
           </button>
