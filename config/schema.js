@@ -5,6 +5,8 @@ export const forms = pgTable("forms", {
   jsonform: text("jsonform").notNull(),
   theme: text("theme").default("default"),
   background: varchar("background").default("white"),
+  borderRadius: varchar("border_radius").default("rounded"),
+  fontFamily: varchar("font_family").default("default"),
   enabledFields: text("enabled_fields"),
   createdBy: varchar("created_by").notNull(),
   createdAt: varchar("created_at").notNull(),

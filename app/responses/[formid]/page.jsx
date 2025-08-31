@@ -6,7 +6,7 @@ import { forms, formResponses } from "@/config/schema";
 import { useUser } from "@clerk/nextjs";
 import { and, eq } from "drizzle-orm";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, Eye, Calendar, User } from "lucide-react";
+import { ArrowLeft, Download, Eye, Calendar, User, FileText, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import moment from "moment";
@@ -82,16 +82,27 @@ const ResponsesPage = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const copyShareLink = () => {
+    const shareUrl = `${window.location.origin}/form/${formid}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert("Share link copied to clipboard!");
+  };
+
   if (loading) {
     return (
       <div className="p-4 md:p-10">
-        <div className="animate-pulse">
+        <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
-            ))}
-          </div>
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -103,7 +114,7 @@ const ResponsesPage = () => {
         <div>
           <h2
             onClick={() => router.back()}
-            className="flex gap-2 items-center cursor-pointer hover:font-semibold transition-all text-2xl font-bold"
+            className="flex gap-2 items-center cursor-pointer hover:text-primary transition-all text-2xl font-bold"
           >
             <ArrowLeft className="w-6 h-6" />
             Form Responses
@@ -118,9 +129,15 @@ const ResponsesPage = () => {
             <Download className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
-          <Button variant="outline" onClick={() => router.push(`/form/${formid}`)}>
-            <Eye className="w-4 h-4 mr-2" />
-            View Form
+          <Link href={`/form/${formid}`}>
+            <Button variant="outline">
+              <Eye className="w-4 h-4 mr-2" />
+              View Form
+            </Button>
+          </Link>
+          <Button variant="outline" onClick={copyShareLink}>
+            <Share2 className="w-4 h-4 mr-2" />
+            Share Form
           </Button>
         </div>
       </div>
@@ -128,16 +145,11 @@ const ResponsesPage = () => {
       {responses.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No responses yet</h3>
             <p className="text-gray-600 mb-4">Share your form to start collecting responses</p>
-            <Button 
-              onClick={() => {
-                const shareUrl = `${window.location.origin}/form/${formid}`;
-                navigator.clipboard.writeText(shareUrl);
-                alert("Share link copied to clipboard!");
-              }}
-            >
+            <Button onClick={copyShareLink}>
+              <Share2 className="w-4 h-4 mr-2" />
               Copy Share Link
             </Button>
           </CardContent>
@@ -164,7 +176,7 @@ const ResponsesPage = () => {
                   <div className="grid gap-4">
                     {formData?.fields?.map((field, fieldIndex) => {
                       const value = responseData[field.fieldName];
-                      if (!value && value !== false) return null;
+                      if (value === undefined || value === null || value === "") return null;
 
                       return (
                         <div key={fieldIndex} className="border-b border-gray-100 pb-3 last:border-b-0">
@@ -175,7 +187,7 @@ const ResponsesPage = () => {
                             {Array.isArray(value) ? (
                               <div className="flex flex-wrap gap-1">
                                 {value.map((item, i) => (
-                                  <span key={i} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                                  <span key={i} className="bg-primary/10 text-primary px-2 py-1 rounded text-sm">
                                     {item}
                                   </span>
                                 ))}
@@ -185,7 +197,7 @@ const ResponsesPage = () => {
                                 {value ? "Yes" : "No"}
                               </span>
                             ) : (
-                              <span>{value}</span>
+                              <span className="break-words">{value}</span>
                             )}
                           </div>
                         </div>

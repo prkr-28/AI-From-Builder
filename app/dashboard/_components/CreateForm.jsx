@@ -16,6 +16,7 @@ import { db } from "@/config";
 import { forms } from "@/config/schema";
 import moment from "moment";
 import { useRouter } from "next/navigation";
+import { Plus, Sparkles } from "lucide-react";
 
 const CreateForm = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -25,6 +26,11 @@ const CreateForm = () => {
   const router = useRouter();
 
   const handleCreateForm = async () => {
+    if (!userInput.trim()) {
+      alert("Please enter a form description");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/generate-form", {
@@ -33,13 +39,13 @@ const CreateForm = () => {
         body: JSON.stringify({ description: userInput }),
       });
 
-      const data = await res.json(); // ✅ parse JSON properly
+      const data = await res.json();
 
-      if (data?.form) {
+      if (data?.form && !data.form.error) {
         const resp = await db
           .insert(forms)
           .values({
-            jsonform: JSON.stringify(data.form), // ✅ store JSON safely
+            jsonform: JSON.stringify(data.form),
             createdBy: user?.primaryEmailAddress?.emailAddress,
             createdAt: moment().format("YYYY-MM-DD HH:mm:ss"),
           })
@@ -48,16 +54,16 @@ const CreateForm = () => {
         if (resp[0].id) {
           router.push(`/edit_form/${resp[0].id}`);
         }
-
-        console.log("new form id:", resp);
+      } else {
+        alert("Error generating form. Please try again.");
       }
-
-      console.log("Generated Form JSON (parsed):", data);
     } catch (err) {
       console.error("Error generating form:", err);
+      alert("Error generating form. Please try again.");
     }
     setLoading(false);
     setOpenDialog(false);
+    setUserInput("");
   };
 
   return (
@@ -68,32 +74,39 @@ const CreateForm = () => {
             className="cursor-pointer"
             onClick={() => setOpenDialog(true)}
           >
-            + Create Form
+            <Plus className="w-4 h-4 mr-2" />
+            Create Form
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create New Form</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Create New Form
+            </DialogTitle>
             <DialogDescription>
-              <Textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                className="my-2"
-                placeholder="Enter form description..."
-              />
-              <div className="flex gap-2 my-3 justify-end">
-                <Button
-                  variant="destructive"
-                  onClick={() => setOpenDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateForm} disabled={loading}>
-                  {loading ? "Generating..." : "Create"}
-                </Button>
-              </div>
+              Describe the form you want to create and our AI will generate it for you.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
+              className="min-h-[100px]"
+              placeholder="Example: Create a contact form with name, email, phone, and message fields..."
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setOpenDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCreateForm} disabled={loading}>
+                {loading ? "Generating..." : "Create"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

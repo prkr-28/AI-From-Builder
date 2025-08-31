@@ -4,7 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
-import { ArrowRight, CheckCircle, Zap, Users, BarChart3 } from "lucide-react";
+import { ArrowRight, CheckCircle, Zap, Users, BarChart3, Sparkles, Clock, Shield } from "lucide-react";
 
 const Hero = () => {
   const { isSignedIn } = useUser();
@@ -20,7 +20,7 @@ const Hero = () => {
       step: "02", 
       title: "AI Generates Form",
       description: "Our AI creates a professional form with all the right fields",
-      icon: <CheckCircle className="w-6 h-6" />,
+      icon: <Sparkles className="w-6 h-6" />,
     },
     {
       step: "03",
@@ -41,13 +41,31 @@ const Hero = () => {
     "Marketing Teams", "Healthcare Providers", "Non-profits", "Consultants"
   ];
 
+  const features = [
+    {
+      icon: <Zap className="w-6 h-6 text-blue-600" />,
+      title: "AI-Powered Generation",
+      description: "Describe your form in natural language and watch AI create it instantly"
+    },
+    {
+      icon: <Clock className="w-6 h-6 text-green-600" />,
+      title: "Save Time",
+      description: "Create professional forms in seconds, not hours"
+    },
+    {
+      icon: <Shield className="w-6 h-6 text-purple-600" />,
+      title: "Secure & Reliable",
+      description: "Your data is safe with enterprise-grade security"
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Hero Section */}
       <div className="container mx-auto px-4 pt-20 pb-16">
         <div className="text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Zap className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" />
             AI-Powered Form Generation
           </div>
           
@@ -144,35 +162,17 @@ const Hero = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-blue-600" />
+            {features.map((feature, index) => (
+              <div key={index} className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-gray-600">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-3">AI-Powered Generation</h3>
-              <p className="text-gray-600">
-                Describe your form in natural language and watch AI create it instantly
-              </p>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Easy Customization</h3>
-              <p className="text-gray-600">
-                Edit fields, change styling, and customize every aspect of your form
-              </p>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                <BarChart3 className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Response Analytics</h3>
-              <p className="text-gray-600">
-                Track submissions and analyze responses with detailed insights
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </div>

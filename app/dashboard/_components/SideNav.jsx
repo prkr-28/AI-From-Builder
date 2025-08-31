@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   LibraryBig,
@@ -42,8 +44,8 @@ const SideNav = () => {
   ];
 
   return (
-    <div className="h-screen shadow-md border">
-      <div className="p-5 cursor-pointer">
+    <div className="h-screen shadow-md border bg-white">
+      <div className="p-5">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
@@ -51,28 +53,23 @@ const SideNav = () => {
           </div>
         </div>
 
-        {menuList.map((item) => (
-          <Link href={item.path} key={item.id}>
-            <li
-              className={`flex items-center gap-3 p-4 mb-3 hover:bg-primary hover:text-white hover:rounded-lg transition-all cursor-pointer ${
-                pathname === item.path ? 'bg-primary text-white rounded-lg' : ''
-              }`}
-            >
-              <item.icon className="w-5 h-5 mr-2" />
-              <span>{item.name}</span>
-            </li>
-          </Link>
-        ))}
+        <ul className="space-y-2">
+          {menuList.map((item) => (
+            <Link href={item.path} key={item.id}>
+              <li
+                className={`flex items-center gap-3 p-4 mb-3 hover:bg-primary hover:text-white hover:rounded-lg transition-all cursor-pointer ${
+                  pathname === item.path ? 'bg-primary text-white rounded-lg' : ''
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.name}</span>
+              </li>
+            </Link>
+          ))}
+        </ul>
       </div>
       
-      <div className="fixed bottom-4 p-6 w-64">
-        <Link href="/dashboard">
-          <Button className="w-full cursor-pointer mb-4">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Form
-          </Button>
-        </Link>
-        
+      <div className="absolute bottom-4 p-6 w-64">
         <div className="mt-7">
           <Progress value={75} />
           <h2 className="text-sm font-medium mt-2 text-gray-600">

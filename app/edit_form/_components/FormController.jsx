@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,14 +14,27 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Palette, Type, Layout, Share2 } from "lucide-react";
+import { Palette, Type, Layout, Share2, Copy, Eye, BarChart3 } from "lucide-react";
+import Link from "next/link";
 
 const FormController = ({ jsonForm, updateForm, formId }) => {
-  const [formTitle, setFormTitle] = useState(jsonForm?.formTitle || "");
-  const [formSubheading, setFormSubheading] = useState(jsonForm?.formSubheading || "");
+  const [formTitle, setFormTitle] = useState("");
+  const [formSubheading, setFormSubheading] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("default");
   const [backgroundColor, setBackgroundColor] = useState("white");
   const [borderRadius, setBorderRadius] = useState("rounded");
+  const [fontFamily, setFontFamily] = useState("default");
+
+  useEffect(() => {
+    if (jsonForm) {
+      setFormTitle(jsonForm.formTitle || "");
+      setFormSubheading(jsonForm.formSubheading || "");
+      setSelectedTheme(jsonForm.theme || "default");
+      setBackgroundColor(jsonForm.background || "white");
+      setBorderRadius(jsonForm.borderRadius || "rounded");
+      setFontFamily(jsonForm.fontFamily || "default");
+    }
+  }, [jsonForm]);
 
   const themes = [
     { value: "default", label: "Default", colors: "bg-white text-gray-900" },
@@ -43,6 +56,13 @@ const FormController = ({ jsonForm, updateForm, formId }) => {
     { value: "extra-rounded", label: "Extra Rounded", class: "rounded-2xl" },
   ];
 
+  const fontOptions = [
+    { value: "default", label: "Default (Geist)" },
+    { value: "serif", label: "Serif" },
+    { value: "mono", label: "Monospace" },
+    { value: "sans", label: "Sans Serif" },
+  ];
+
   const handleUpdateForm = () => {
     const updatedForm = {
       ...jsonForm,
@@ -51,6 +71,7 @@ const FormController = ({ jsonForm, updateForm, formId }) => {
       theme: selectedTheme,
       background: backgroundColor,
       borderRadius: borderRadius,
+      fontFamily: fontFamily,
     };
     updateForm(updatedForm);
   };
@@ -100,7 +121,7 @@ const FormController = ({ jsonForm, updateForm, formId }) => {
             </div>
 
             <Button onClick={handleUpdateForm} className="w-full">
-              Update Form
+              Update Content
             </Button>
           </TabsContent>
 
@@ -118,7 +139,7 @@ const FormController = ({ jsonForm, updateForm, formId }) => {
                   {themes.map((theme) => (
                     <SelectItem key={theme.value} value={theme.value}>
                       <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded ${theme.colors}`}></div>
+                        <div className={`w-4 h-4 rounded border ${theme.colors}`}></div>
                         {theme.label}
                       </div>
                     </SelectItem>
@@ -155,7 +176,29 @@ const FormController = ({ jsonForm, updateForm, formId }) => {
                 <SelectContent>
                   {borderOptions.map((border) => (
                     <SelectItem key={border.value} value={border.value}>
-                      {border.label}
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 border-2 border-gray-400 ${border.class}`}></div>
+                        {border.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2 mb-2">
+                <Type className="w-4 h-4" />
+                Font Family
+              </Label>
+              <Select value={fontFamily} onValueChange={setFontFamily}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select font" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fontOptions.map((font) => (
+                    <SelectItem key={font.value} value={font.value}>
+                      {font.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -181,9 +224,26 @@ const FormController = ({ jsonForm, updateForm, formId }) => {
                 </code>
               </div>
 
-              <Button onClick={copyShareLink} className="w-full">
-                Copy Share Link
-              </Button>
+              <div className="space-y-2">
+                <Button onClick={copyShareLink} className="w-full">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Share Link
+                </Button>
+                
+                <Link href={`/form/${formId}`} className="block">
+                  <Button variant="outline" className="w-full">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Preview Form
+                  </Button>
+                </Link>
+
+                <Link href={`/responses/${formId}`} className="block">
+                  <Button variant="outline" className="w-full">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    View Responses
+                  </Button>
+                </Link>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

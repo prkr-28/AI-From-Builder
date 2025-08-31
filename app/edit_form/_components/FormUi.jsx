@@ -13,21 +13,33 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import FormEdit from "./Formedit";
 
-const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default" }) => {
-  const [formData, setFormData] = useState({});
+const FormUi = ({ 
+  jsonform, 
+  editable = false, 
+  onUpdate, 
+  selectedTheme = "default",
+  onFormSubmit,
+  formData: externalFormData,
+  onInputChange: externalInputChange,
+  onCheckboxChange: externalCheckboxChange,
+  submitting = false
+}) => {
+  const [internalFormData, setInternalFormData] = useState({});
 
-  const handleInputChange = (fieldName, value) => {
-    setFormData((prev) => ({
+  // Use external form data if provided (for public forms), otherwise use internal state
+  const formData = externalFormData || internalFormData;
+  const handleInputChange = externalInputChange || ((fieldName, value) => {
+    setInternalFormData((prev) => ({
       ...prev,
       [fieldName]: value,
     }));
-  };
+  });
 
-  const handleCheckboxChange = (fieldName, value, isChecked) => {
-    setFormData((prev) => {
-      // If it's a single checkbox (not in options array)
+  const handleCheckboxChange = externalCheckboxChange || ((fieldName, value, isChecked) => {
+    setInternalFormData((prev) => {
       if (!value) {
         return {
           ...prev,
@@ -35,7 +47,6 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
         };
       }
 
-      // For multiple checkboxes
       const currentValues = prev[fieldName] || [];
       if (isChecked) {
         return {
@@ -49,7 +60,7 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
         };
       }
     });
-  };
+  });
 
   const updateField = (index, updatedField) => {
     if (!editable || !onUpdate) return;
@@ -77,14 +88,35 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
     onUpdate(updatedForm);
   };
 
+  const addNewField = () => {
+    if (!editable || !onUpdate) return;
+    
+    const newField = {
+      fieldName: `field_${Date.now()}`,
+      fieldType: "text",
+      label: "New Field",
+      placeholder: "Enter value",
+      required: false
+    };
+    
+    const updatedForm = {
+      ...jsonform,
+      fields: [...(jsonform.fields || []), newField],
+    };
+    
+    onUpdate(updatedForm);
+  };
+
   const getThemeClasses = () => {
     const theme = jsonform?.theme || selectedTheme;
     const background = jsonform?.background || "white";
     const borderRadius = jsonform?.borderRadius || "rounded";
+    const fontFamily = jsonform?.fontFamily || "default";
     
     let themeClass = "bg-white text-gray-900";
-    let borderClass = "rounded-2xl";
+    let borderClass = "rounded-lg";
     let backgroundClass = "bg-white";
+    let fontClass = "font-sans";
     
     switch (theme) {
       case "dark":
@@ -118,55 +150,71 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
         borderClass = "rounded-3xl";
         break;
     }
+
+    switch (fontFamily) {
+      case "serif":
+        fontClass = "font-serif";
+        break;
+      case "mono":
+        fontClass = "font-mono";
+        break;
+      case "sans":
+        fontClass = "font-sans";
+        break;
+    }
     
-    return `${themeClass} ${backgroundClass} ${borderClass}`;
+    return `${themeClass} ${backgroundClass} ${borderClass} ${fontClass}`;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
-    // Here you would typically send the data to your API
+    if (onFormSubmit) {
+      onFormSubmit(formData);
+    } else {
+      console.log("Form Data:", formData);
+    }
   };
 
-  // Helper function to extract value and label from option
   const getOptionData = (option, index) => {
     if (typeof option === "object" && option !== null) {
       return {
-        value:
-          option.value && option.value.trim() !== ""
-            ? option.value
-            : `option-${index}`,
+        value: option.value && option.value.trim() !== "" ? option.value : `option-${index}`,
         label: option.label || option.value || `Option ${index + 1}`,
       };
     } else {
       return {
-        value:
-          option && option.toString().trim() !== ""
-            ? option.toString()
-            : `option-${index}`,
+        value: option && option.toString().trim() !== "" ? option.toString() : `option-${index}`,
         label: option || `Option ${index + 1}`,
       };
     }
   };
 
+  if (!jsonform || !jsonform.fields) {
+    return (
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <p className="text-gray-500">No form data available</p>
+      </div>
+    );
+  }
+
   return (
-    <div className={`max-w-2xl mx-auto p-8 shadow-lg ${getThemeClasses()}`}>
+    <div className={`max-w-2xl mx-auto p-8 shadow-lg border ${getThemeClasses()}`}>
       {/* Title */}
       <h2 className="font-bold text-center text-3xl mb-2" style={{ color: 'var(--primary)' }}>
-        {jsonform.formTitle}
+        {jsonform.formTitle || "Untitled Form"}
       </h2>
       <h3 className="text-sm opacity-70 text-center mb-6">
-        {jsonform.formSubheading}
+        {jsonform.formSubheading || "Please fill out this form"}
       </h3>
 
       {/* Form Fields */}
       <form className="space-y-5" onSubmit={handleSubmit}>
         {jsonform?.fields?.map((field, index) => {
-          // ✅ Section Header
+          // Section Header
           if (field.fieldType === "section_header") {
             return (
               <div key={index} className="pt-6">
-                <h3 className="text-[22px] font-semibold">
+                <h3 className="text-xl font-semibold">
                   {field?.label}
                 </h3>
                 {field?.description && (
@@ -186,7 +234,7 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
             );
           }
 
-          // ✅ Select Field
+          // Select Field
           if (field.fieldType === "select") {
             return (
               <div key={index} className="flex flex-col gap-2">
@@ -194,19 +242,18 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                   {field?.label}
                   {field.required && <span className="text-red-500"> *</span>}
                   {editable && (
-                    <div>
-                      <FormEdit 
-                        defaultValue={field} 
-                        onUpdate={(updatedField) => updateField(index, updatedField)}
-                        onDelete={() => deleteField(index)}
-                      />
-                    </div>
+                    <FormEdit 
+                      defaultValue={field} 
+                      onUpdate={(updatedField) => updateField(index, updatedField)}
+                      onDelete={() => deleteField(index)}
+                    />
                   )}
                 </label>
                 <Select
                   onValueChange={(value) =>
                     handleInputChange(field.fieldName, value)
                   }
+                  required={field.required}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
@@ -228,9 +275,8 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
             );
           }
 
-          // ✅ Checkbox Field - Handle both single and multiple checkboxes
+          // Checkbox Field
           if (field.fieldType === "checkbox") {
-            // If it's a single checkbox (like terms acceptance)
             if (!field.options || field.options.length === 0) {
               return (
                 <div className="flex gap-1 items-center" key={index}>
@@ -247,9 +293,7 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                       htmlFor={field.fieldName}
                       className="text-sm font-medium"
                     >
-                      <span
-                        dangerouslySetInnerHTML={{ __html: field?.label }}
-                      />
+                      {field?.label}
                       {field.required && (
                         <span className="text-red-500"> *</span>
                       )}
@@ -257,19 +301,16 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                   </div>
 
                   {editable && (
-                    <div>
-                      <FormEdit 
-                        defaultValue={field} 
-                        onUpdate={(updatedField) => updateField(index, updatedField)}
-                        onDelete={() => deleteField(index)}
-                      />
-                    </div>
+                    <FormEdit 
+                      defaultValue={field} 
+                      onUpdate={(updatedField) => updateField(index, updatedField)}
+                      onDelete={() => deleteField(index)}
+                    />
                   )}
                 </div>
               );
             }
 
-            // If it's multiple checkboxes
             return (
               <div key={index} className="flex flex-col gap-2">
                 <div className="flex gap-1 items-center">
@@ -278,13 +319,11 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                     {field.required && <span className="text-red-500"> *</span>}
                   </label>
                   {editable && (
-                    <div>
-                      <FormEdit 
-                        defaultValue={field} 
-                        onUpdate={(updatedField) => updateField(index, updatedField)}
-                        onDelete={() => deleteField(index)}
-                      />
-                    </div>
+                    <FormEdit 
+                      defaultValue={field} 
+                      onUpdate={(updatedField) => updateField(index, updatedField)}
+                      onDelete={() => deleteField(index)}
+                    />
                   )}
                 </div>
 
@@ -296,15 +335,9 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                         <Checkbox
                           id={`${field.fieldName}-${i}`}
                           value={value}
-                          checked={(formData[field.fieldName] || []).includes(
-                            value
-                          )}
+                          checked={(formData[field.fieldName] || []).includes(value)}
                           onCheckedChange={(checked) =>
-                            handleCheckboxChange(
-                              field.fieldName,
-                              value,
-                              checked
-                            )
+                            handleCheckboxChange(field.fieldName, value, checked)
                           }
                         />
                         <Label htmlFor={`${field.fieldName}-${i}`}>
@@ -318,18 +351,28 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
             );
           }
 
-          // ✅ Radio Field
+          // Radio Field
           if (field.fieldType === "radio") {
             return (
               <div key={index} className="flex flex-col gap-2">
-                <label className="text-sm font-medium">
-                  {field?.label}
-                  {field.required && <span className="text-red-500"> *</span>}
-                </label>
+                <div className="flex gap-1 items-center">
+                  <label className="text-sm font-medium">
+                    {field?.label}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </label>
+                  {editable && (
+                    <FormEdit 
+                      defaultValue={field} 
+                      onUpdate={(updatedField) => updateField(index, updatedField)}
+                      onDelete={() => deleteField(index)}
+                    />
+                  )}
+                </div>
                 <RadioGroup
                   onValueChange={(value) =>
                     handleInputChange(field.fieldName, value)
                   }
+                  required={field.required}
                 >
                   {field?.options?.map((option, i) => {
                     const { value, label } = getOptionData(option, i);
@@ -350,7 +393,7 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
             );
           }
 
-          // ✅ Textarea Field
+          // Textarea Field
           if (field.fieldType === "textarea") {
             return (
               <div key={index} className="flex flex-col gap-2">
@@ -360,13 +403,11 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                     {field.required && <span className="text-red-500"> *</span>}
                   </label>
                   {editable && (
-                    <div>
-                      <FormEdit 
-                        defaultValue={field} 
-                        onUpdate={(updatedField) => updateField(index, updatedField)}
-                        onDelete={() => deleteField(index)}
-                      />
-                    </div>
+                    <FormEdit 
+                      defaultValue={field} 
+                      onUpdate={(updatedField) => updateField(index, updatedField)}
+                      onDelete={() => deleteField(index)}
+                    />
                   )}
                 </div>
                 <Textarea
@@ -375,13 +416,14 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                   onChange={(e) =>
                     handleInputChange(field.fieldName, e.target.value)
                   }
+                  required={field.required}
                   className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
                 />
               </div>
             );
           }
 
-          // ✅ Default: Input field
+          // Default: Input field
           return (
             <div key={index} className="flex flex-col gap-2">
               <div className="flex gap-1 items-center">
@@ -390,13 +432,11 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                   {field.required && <span className="text-red-500"> *</span>}
                 </label>
                 {editable && (
-                  <div>
-                    <FormEdit 
-                      defaultValue={field} 
-                      onUpdate={(updatedField) => updateField(index, updatedField)}
-                      onDelete={() => deleteField(index)}
-                    />
-                  </div>
+                  <FormEdit 
+                    defaultValue={field} 
+                    onUpdate={(updatedField) => updateField(index, updatedField)}
+                    onDelete={() => deleteField(index)}
+                  />
                 )}
               </div>
               <Input
@@ -406,25 +446,43 @@ const FormUi = ({ jsonform, editable = false, onUpdate, selectedTheme = "default
                 onChange={(e) =>
                   handleInputChange(field.fieldName, e.target.value)
                 }
+                required={field.required}
                 className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
               />
             </div>
           );
         })}
 
-        {/* Submit button */}
-        <div className="pt-4">
-          <button
-            type="submit"
-            className="w-full font-medium py-3 rounded-lg transition"
-            style={{ 
-              backgroundColor: 'var(--primary)', 
-              color: 'var(--primary-foreground)' 
-            }}
-          >
-            Submit
-          </button>
-        </div>
+        {/* Add Field Button for editable forms */}
+        {editable && (
+          <div className="pt-4">
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={addNewField}
+              className="w-full"
+            >
+              + Add Field
+            </Button>
+          </div>
+        )}
+
+        {/* Submit button for non-editable forms */}
+        {!editable && (
+          <div className="pt-4">
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full font-medium py-3 rounded-lg transition"
+              style={{ 
+                backgroundColor: 'var(--primary)', 
+                color: 'var(--primary-foreground)' 
+              }}
+            >
+              {submitting ? "Submitting..." : "Submit"}
+            </Button>
+          </div>
+        )}
       </form>
     </div>
   );
