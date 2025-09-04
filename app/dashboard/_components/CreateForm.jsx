@@ -40,6 +40,7 @@ const CreateForm = () => {
       });
 
       const data = await res.json();
+      console.log("Generated form data:", data);
 
       if (data?.form && !data.form.error) {
         const resp = await db
@@ -55,6 +56,7 @@ const CreateForm = () => {
           router.push(`/edit_form/${resp[0].id}`);
         }
       } else {
+        console.error("Form generation error:", data);
         alert("Error generating form. Please try again.");
       }
     } catch (err) {
