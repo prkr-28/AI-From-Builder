@@ -230,14 +230,14 @@ const FormController = ({ jsonForm, updateForm, formId }) => {
                   Copy Share Link
                 </Button>
                 
-                <Link href={`/form/${formId}`} className="block">
+                <Link href={`/form/${formid}`} className="block">
                   <Button variant="outline" className="w-full">
                     <Eye className="w-4 h-4 mr-2" />
                     Preview Form
                   </Button>
                 </Link>
 
-                <Link href={`/responses/${formId}`} className="block">
+                <Link href={`/responses/${formid}`} className="block">
                   <Button variant="outline" className="w-full">
                     <BarChart3 className="w-4 h-4 mr-2" />
                     View Responses

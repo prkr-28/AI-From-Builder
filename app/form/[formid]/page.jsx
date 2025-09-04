@@ -139,15 +139,17 @@ const PublicForm = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        <FormUi 
-          jsonform={jsonFormData} 
-          editable={false}
-          onFormSubmit={handleSubmit}
-          formData={formData}
-          onInputChange={handleInputChange}
-          onCheckboxChange={handleCheckboxChange}
-          submitting={submitting}
-        />
+        {jsonFormData && (
+          <FormUi 
+            jsonform={jsonFormData} 
+            editable={false}
+            onFormSubmit={handleSubmit}
+            formData={formData}
+            onInputChange={handleInputChange}
+            onCheckboxChange={handleCheckboxChange}
+            submitting={submitting}
+          />
+        )}
       </div>
     </div>
   );

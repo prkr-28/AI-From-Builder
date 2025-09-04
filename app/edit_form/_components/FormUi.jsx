@@ -200,7 +200,7 @@ const FormUi = ({
   return (
     <div className={`max-w-2xl mx-auto p-8 shadow-lg border ${getThemeClasses()}`}>
       {/* Title */}
-      <h2 className="font-bold text-center text-3xl mb-2" style={{ color: 'var(--primary)' }}>
+      <h2 className="font-bold text-center text-3xl mb-2 text-primary">
         {jsonform.formTitle || "Untitled Form"}
       </h2>
       <h3 className="text-sm opacity-70 text-center mb-6">
@@ -214,22 +214,22 @@ const FormUi = ({
           if (field.fieldType === "section_header") {
             return (
               <div key={index} className="pt-6">
-                <h3 className="text-xl font-semibold">
-                  {field?.label}
-                </h3>
-                {field?.description && (
-                  <p className="text-sm opacity-70">{field.description}</p>
-                )}
-                <hr className="my-3 opacity-20" />
-                {editable && (
-                  <div className="flex justify-end">
+                <div className="flex gap-1 items-center">
+                  <h3 className="text-xl font-semibold">
+                    {field?.label}
+                  </h3>
+                  {editable && (
                     <FormEdit 
                       defaultValue={field} 
                       onUpdate={(updatedField) => updateField(index, updatedField)}
                       onDelete={() => deleteField(index)}
                     />
-                  </div>
+                  )}
+                </div>
+                {field?.description && (
+                  <p className="text-sm opacity-70">{field.description}</p>
                 )}
+                <hr className="my-3 opacity-20" />
               </div>
             );
           }
@@ -238,9 +238,11 @@ const FormUi = ({
           if (field.fieldType === "select") {
             return (
               <div key={index} className="flex flex-col gap-2">
-                <label className="text-sm flex gap-1 items-center font-medium">
-                  {field?.label}
-                  {field.required && <span className="text-red-500"> *</span>}
+                <div className="flex gap-1 items-center">
+                  <label className="text-sm font-medium">
+                    {field?.label}
+                    {field.required && <span className="text-red-500"> *</span>}
+                  </label>
                   {editable && (
                     <FormEdit 
                       defaultValue={field} 
@@ -248,7 +250,7 @@ const FormUi = ({
                       onDelete={() => deleteField(index)}
                     />
                   )}
-                </label>
+                </div>
                 <Select
                   onValueChange={(value) =>
                     handleInputChange(field.fieldName, value)
@@ -473,11 +475,7 @@ const FormUi = ({
             <Button
               type="submit"
               disabled={submitting}
-              className="w-full font-medium py-3 rounded-lg transition"
-              style={{ 
-                backgroundColor: 'var(--primary)', 
-                color: 'var(--primary-foreground)' 
-              }}
+              className="w-full font-medium py-3 rounded-lg transition bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {submitting ? "Submitting..." : "Submit"}
             </Button>

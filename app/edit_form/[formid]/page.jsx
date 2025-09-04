@@ -14,8 +14,9 @@ import moment from "moment";
 const EditForm = () => {
   const { formid } = useParams();
   const { user } = useUser();
-  const [jsonFormData, setJsonFormData] = useState([]);
+  const [jsonFormData, setJsonFormData] = useState(null);
   const [updateTrigger, setUpdateTrigger] = useState(0);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,19 +24,25 @@ const EditForm = () => {
   }, [user]);
 
   const GetFormData = async () => {
-    const res = await db
-      .select()
-      .from(forms)
-      .where(
-        and(
-          eq(forms.id, formid),
-          eq(forms.createdBy, user?.primaryEmailAddress?.emailAddress)
-        )
-      );
+    try {
+      const res = await db
+        .select()
+        .from(forms)
+        .where(
+          and(
+            eq(forms.id, formid),
+            eq(forms.createdBy, user?.primaryEmailAddress?.emailAddress)
+          )
+        );
 
-    console.log(JSON.parse(res[0].jsonform));
-
-    setJsonFormData(JSON.parse(res[0].jsonform));
+      if (res.length > 0) {
+        console.log("Form data:", JSON.parse(res[0].jsonform));
+        setJsonFormData(JSON.parse(res[0].jsonform));
+      }
+    } catch (error) {
+      console.error("Error fetching form:", error);
+    }
+    setLoading(false);
   };
 
   const updateFormInDb = async (updatedForm) => {
@@ -54,6 +61,21 @@ const EditForm = () => {
       console.error("Error updating form:", error);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-10">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="md:col-span-2 h-96 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-10">
       <h2
@@ -71,14 +93,16 @@ const EditForm = () => {
             formId={formid}
           />
         </div>
-        <div className="md:col-span-2 border rounded-lg p-5  overflow-y-auto">
+        <div className="md:col-span-2 border rounded-lg p-5 overflow-y-auto">
           <div className="max-w-3xl mx-auto w-full">
-            <FormUi 
-              jsonform={jsonFormData} 
-              editable={true}
-              onUpdate={updateFormInDb}
-              key={updateTrigger}
-            />
+            {jsonFormData && (
+              <FormUi 
+                jsonform={jsonFormData} 
+                editable={true}
+                onUpdate={updateFormInDb}
+                key={updateTrigger}
+              />
+            )}
           </div>
         </div>
       </div>
